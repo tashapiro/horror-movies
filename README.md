@@ -1,10 +1,12 @@
+
+
 # Horror Movies :zombie:
 
 ## Overview
 
 Purpose is to explore a dataset about horror movies dating back to the 1950s. Data set was extracted from **[The Movie Datbase](https://www.themoviedb.org)** via the tmdb API using R <code>httr</code>. There are ~35K movie records in this dataset.
 
-The **Introduction to ggplot2** workshop organized the **[R-Ladies Paris](https://twitter.com/rladiesparis)**. Participants in the workshop create a total of 3 data visuals using ggplot2 and supporting ggplot libraries. Workshop material is in an **R Markdown html notebook** format. 
+This repository also supports content created specifically for the **Introduction to ggplot2** workshop organized the **[R-Ladies Paris](https://twitter.com/rladiesparis)**. Participants in the workshop create a total of 3 data visuals using ggplot2 and supporting ggplot libraries. Workshop material is in an **R Markdown html notebook** format. 
 
 The workshop is scheduled for 1pm ET October 13th, 2022. A recording of the session will be posted on YouTube at a later date.
 
