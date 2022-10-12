@@ -3,9 +3,11 @@ title: "Introduction to {ggplot2}"
 output: html_notebook
 ---
 
-```{r setup2, include=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align="center")
+knitr::opts_knit$set(root.dir="~/Desktop")
 options(dplyr.summarise.inform = FALSE)
+#options(repos = list(CRAN="http://cran.rstudio.com/"))
 ```
 
 ```{css, echo=FALSE}
@@ -55,7 +57,7 @@ if (any(installed_packages == FALSE)) {
 
 [**Other Packages**]{.underline}. Last but not least, we will use **sysfonts** and **showtext** to load different font families and adjust the typography.
 
-```{r setup, message=FALSE}
+```{r libraries, message=FALSE}
 #includes dplyr + ggplot
 library(tidyverse)
 ##ggplot extension packages
@@ -89,7 +91,7 @@ The data we're using today is from [**The Movie Database**](https://www.themovie
 
 Shout out to [**Georgios Karamanis**](https://twitter.com/geokaramanis) for inspiring our topic, I was inspired to wrangle this data after finding a similar one Georgios submitted for [**#TidyTuesday**](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-10-22)back in 2019.
 
-<center>![An alternative title to this workshop](https://raw.githubusercontent.com/tashapiro/horror-movies/main/images/little-workshop.png){width="60%"}</center>
+<center>![An alternative title to this workshop](https://raw.githubusercontent.com/tashapiro/horror-movies/main/images/little-workshop.jpeg){width="60%"}</center>
 
 ### Data Dictionary
 
@@ -146,8 +148,8 @@ df <- raw|>
          #convert release date from char to date
          release_date = as.Date(release_date),
          #truncate date on year and month
-         release_year = format(release_date, '%Y'),
-         release_month = format(release_date, '%m'),
+         release_year = as.numeric(format(release_date, '%Y')),
+         release_month = as.numeric(format(release_date, '%m')),
          #concatenate base url with poster path to get poster url
          poster_url = paste0(base_url,poster_path))
 
@@ -231,12 +233,14 @@ ggplot(data=df_slashers, mapping=aes(y=revenue, x=budget))+
 
 *💡 Tip: There are a bunch of [color palette libraries](https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-data-visualization/) you can explore. If you want something more custom, palette generator sites like [Coolors](https://coolors.co/) are also nice!*
 
-```{r interm-scatter, fig.align="center", message=FALSE}
-ggplot(df_slashers, mapping=aes(y=revenue, x=budget))+
+```{r interm-scatter, fig.align="center", message=FALSE, fig.width=3}
+#create ggplot and score in a variable name
+plot_scatter<-ggplot(df_slashers, mapping=aes(y=revenue, x=budget))+
   geom_point(mapping=aes(size=popularity, color=collection_name), alpha=0.6)+
   scale_color_manual(values = c("#DB2B39","#29335C","#F3A712",'#3ED58E'))+
   guides(
-    color = guide_legend(override.aes = c(size=4))
+    color = guide_legend(override.aes = list(size=4)),
+    size = guide_legend(override.aes=list(shape=21,color="black",fill="white"))
   )+
   labs(title="Slasher Movies: Revenue vs. Budget", 
        subtitle = "Comparison of movies in popular slasher franchise series.",
@@ -246,6 +250,11 @@ ggplot(df_slashers, mapping=aes(y=revenue, x=budget))+
        size = "Popularity", 
        color = "Franchise")+
   theme_minimal()
+
+plot_scatter
+
+#uncomment to save plot
+#ggsave(filename="plot_scatter.png", plot=plot_scatter, width =7 , height=5, units="in", bg="white")
 ```
 
 ------------------------------------------------------------------------
@@ -265,7 +274,7 @@ df_monthly<-df|>
   #summarise total movies, n() equivalent of count
   summarise(count=n())|>
   #filter to only get years between 2016 and 2021
-  filter(release_year %in% c(2016,2017,2018,2019,2020,2021))
+  filter(release_year>=2016 & release_year<=2021)
 
 head(df_monthly,5)
 ```
@@ -280,7 +289,7 @@ df_monthly_2021<- df_monthly|>filter(release_year==2021)
 
 #create line plot with plot titles
 ggplot(data = df_monthly_2021, 
-       mapping=aes(x=release_month, y=count, group=1))+
+       mapping=aes(x=release_month, y=count))+
   geom_line()+
     labs(x="Month",
        y="Number of Movies", x="Month",
@@ -290,9 +299,9 @@ ggplot(data = df_monthly_2021,
 
 ### Level Up Line Chart
 
-[**More Scales**]{.underline}**.** We got a taste of scales from our first plot. We can also use scales to modify our x and y axis (e.g. limits, breaks, and labels). We'll need `scale_y_continuous` to change the y axis and `scale_x_discrete` to change our x axis.
+[**More Scales**]{.underline}**.** Notice our first plot we have an issue with the x axis, it's plotting it on a continuous scale because *release_month* is numeric. Our y axis is also starting \~90 instead of 0. We can use scales to modify our x and y axis (e.g. limits, breaks, and labels). We'll need `scale_y_continuous` to change the y axis and `scale_x_continuous` to change our x axis.
 
-[**Annotations**]{.underline}. Sometimes its helpful to call out specific observations in our plots. We can add annotations with ggplot `annotate`.
+[**Annotations**]{.underline}. Sometimes its helpful to call out specific observations in our plots. We can add annotations with an `annotate` layer. For long annotations, use \n in your text to introduce a line break, e.g. "Wrap \nthis text."
 
 [**Custom Theme**]{.underline}. We tested out one of ggplot's default themes before, now let's try creating our own custom `theme` .
 
@@ -313,13 +322,13 @@ pal_bg<-'#191919'
 
 ```{r interm-line-plot, fig.align='center', fig.width=3}
 #expand on line chart
-ggplot(data = df_monthly_2021, 
-       mapping=aes(x=release_month, y=count, group=1))+
+plot_line<-ggplot(data = df_monthly_2021, 
+       mapping=aes(x=release_month, y=count))+
   geom_line(color="green")+
-  annotate(geom="text", 
-           label="Horror movies released right in \ntime for Halloween",
-           x=10, y=410, color=pal_text, size=3)+
-  scale_x_discrete(labels=month.abb[1:12])+
+  annotate(geom="label", 
+           label="Horror movies popular right \naround Halloween",
+           x=10, y=410, color=pal_text, fill=pal_bg, size=3)+
+  scale_x_continuous(breaks=1:12, labels=month.abb[1:12])+
   scale_y_continuous(limits=c(0,450))+
   labs(x="",
        y="Number of Movies", x="Month",
@@ -329,14 +338,21 @@ ggplot(data = df_monthly_2021,
         #adjust plot background + gridlines
         plot.background = element_rect(fill=pal_bg, color=pal_bg),
         panel.background = element_rect(fill=pal_bg),
+        panel.grid.minor = element_blank(),
         panel.grid = element_line(color=pal_grid, size=0.2),
         #modify text color
         text = element_text(color=pal_text),
         axis.text = element_text(color=pal_text),
+        axis.title.y = element_text(size=10, margin=margin(r=10)),
         plot.title = element_text(family="Creepster", size=20, hjust=0.5),
         plot.subtitle = element_text(hjust=0.5),
         #add padding around the plot
         plot.margin = margin(l=20, r=20, b=10, t=20))
+
+plot_line
+
+#uncomment to save plot
+#ggsave(filename="plot_line.png", plot=plot_line, width=7, height=5, units="in")
 ```
 
 ### Line Charts + Facets
@@ -348,10 +364,10 @@ To create multiple plots, we can use ggplot [`facet_wrap`](https://ggplot2.tidyv
 💡 *Tip*: *Applying `annotate` on a facet plot will apply the annotation to all plots. To annotate a singular plot, recommend creating a new data frame with a facet variable and using `geom_text` or `geom_label`.*
 
 ```{r 4c.facet-line-chart, fig.align='center', fig.width=3.5}
-ggplot(data = df_monthly, mapping=aes(x=release_month, y=count, group=1))+
+plot_facet<-ggplot(data = df_monthly, mapping=aes(x=release_month, y=count, group=1))+
   geom_line(color="green")+
   facet_wrap(~release_year)+
-  scale_x_discrete(labels=month.abb[1:12])+
+  scale_x_continuous(breaks=1:12, labels=month.abb[1:12])+
   labs(x="",
        y="New Releases", 
        title = "Most Horror Movies released around Halloween",
@@ -362,17 +378,22 @@ ggplot(data = df_monthly, mapping=aes(x=release_month, y=count, group=1))+
         plot.background = element_rect(fill=pal_bg, color=pal_bg),
         panel.background = element_rect(fill=pal_bg),
         strip.background = element_rect(fill="#521EA4"),
+        panel.grid.minor = element_blank(),
         panel.grid = element_line(color=pal_grid, size=0.2),
         #modify text 
         text = element_text(color=pal_text),
         axis.text = element_text(color=pal_text),
         axis.text.x=element_text(angle=90, size=9),
         plot.title = element_text(family="Creepster", size=20, hjust=0.5),
-        plot.subtitle = element_text(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5, size=10),
         strip.text=element_text(color=pal_text),
         #add padding around plot
         plot.margin = margin(l=20, r=20, b=10, t=20))
 
+plot_facet
+
+#uncomment to save plot
+#ggsave(filename="plot_facet.png", plot=plot_facet, width =7 , height=5, units="in")
 ```
 
 ------------------------------------------------------------------------
@@ -428,7 +449,7 @@ pal_bar<-'#A70000'
 
 ggplot(data=df_top_movies, 
        mapping=aes(y=reorder(title,revenue), x=revenue))+
-  geom_col(fill = pal_bar, width=0.5)+
+  geom_col(fill = pal_bar, width=0.6)+
   geom_text(mapping=aes(label=round(revenue,0), x=revenue+20), 
             color="white", size=4)+
   scale_x_continuous(limits=c(0,750), expand=c(0,0))+
@@ -452,7 +473,7 @@ ggplot(data=df_top_movies,
 
 ### Advanced Bar Plot
 
-[**Keep Layering**]{.underline}. Add in budget revenue for comparison. We'll create a smaller `geom_col` within our revenue geom_col.
+[**Keep Layering**]{.underline}. Add in budget revenue for comparison. We can create a bullet bar graph by overlaying a thinner `geom_col` over our existing set up. Use the **width** argument to adjust its thickness.
 
 [**Intro to More Geoms**]{.underline}. The world of geoms goes beyond the geoms listed in ggplot2. There are tons of ggplot extension's to explore that work with ggplot2. In this example, we will plot the movie poster images with **ggimage** [`geom_image`](https://www.rdocumentation.org/packages/ggimage/versions/0.3.1/topics/geom_image).
 
@@ -461,7 +482,7 @@ ggplot(data=df_top_movies,
 🗒️ *Note: For curved lines, a negative curvature values create left-hand curves and positive values create right-hand curves.*
 
 ```{r adv-bar-plot, fig.height=3.7, fig.width=3.7}
-ggplot(data=df_top_movies, mapping=aes(y=reorder(title,revenue), x=revenue))+
+plot_bar<-ggplot(data=df_top_movies, mapping=aes(y=reorder(title,revenue), x=revenue))+
   #horizontal bar chart with revenue and budget
   geom_col(fill=pal_bar, width=0.4)+
   geom_col(mapping=aes(x=budget), fill='#600000', width=0.2)+
@@ -503,10 +524,15 @@ ggplot(data=df_top_movies, mapping=aes(y=reorder(title,revenue), x=revenue))+
     #adjust lines for ticks and grid
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
-    panel.grid.major.x= element_line(color="#2C2C2C", size=0.2),
+    panel.grid.major.x= element_line(color=pal_grid, size=0.2),
     #add padding around plot
     plot.margin = margin(t=20, b=20, l=20, r=20)
   )
+
+plot_bar
+
+#uncomment to save file
+#ggsave(filename="plot_bar.png", plot=plot_bar, height=8, width=8, units="in")
 ```
 
 ## The Workshop Sequel
