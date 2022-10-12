@@ -1,0 +1,360 @@
+---
+title: "Introduction to {ggplot2}"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center")
+knitr::opts_knit$set(root.dir="~/Desktop")
+options(dplyr.summarise.inform = FALSE)
+#options(repos = list(CRAN="http://cran.rstudio.com/"))
+```
+
+```{css, echo=FALSE}
+.table tr:nth-child(even) { background: #eee; }
+```
+
+------------------------------------------------------------------------
+
+## Overview
+
+This workshop is brought to you by [**R-Ladies Paris**](https://twitter.com/rladiesparis). Today we will explore how to use basic concepts of [**ggplot2**](https://ggplot2.tidyverse.org/) to create our own plots!
+
+This workshop is divided into 5 sections:
+
+1.  Set Up (5 min)
+2.  Data Prep (10 min)
+3.  Plot 1 (15 min)
+4.  Plot 2 (15 min)
+5.  Plot 3 (20 min)
+
+------------------------------------------------------------------------
+
+## 1. Set Up
+
+### Install Libraries
+
+Don't know if you have the libraries already? No problem. Execute the code below to get started, if you have them already installed it will skip this step, otherwise it will start installing.
+
+Hat tip to Antoine Soetewey for this [cool trick](https://statsandr.com/blog/an-efficient-way-to-install-and-load-r-packages/).
+
+```{r download}
+#list of packages used in this workshop
+packages<- c("tidyverse","ggimage","sysfonts","showtext")
+
+# if package not already installed, install package
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}
+```
+
+### Import Libraries
+
+[**Tidyverse**]{.underline}. ggplot2 is not explicitly included among our library import lists below. Instead, we're loading in [tidyverse](https://www.tidyverse.org/packages/). Tidyverse is a bundle of packages, which includes **ggplot2** and **dplyr**.
+
+[**Extensions**]{.underline}. There are also several [extension packages](https://exts.ggplot2.tidyverse.org/) that complement ggplot2. Today we'll explore how to work with ggplot extensions with **ggimage** and **ggtext**.
+
+[**Other Packages**]{.underline}. Last but not least, we will use **sysfonts** and **showtext** to load different font families and adjust the typography.
+
+```{r libraries, message=FALSE}
+#includes dplyr + ggplot
+library(tidyverse)
+##ggplot extension packages
+library(ggimage)
+#to add google font libraries
+library(sysfonts)
+library(showtext)
+```
+
+### Load Fonts
+
+To customize fonts in our plots, we'll import a couple of fonts using [**sysfonts**](https://cran.r-project.org/web/packages/sysfonts/sysfonts.pdf) and **showtext.** We can use sysfonts to add fonts from [**Google's Font Library**](https://fonts.google.com/) without downloading them locally with `font_add_google`.
+
+*💡 Tip: For chart typefaces, you can't go wrong with a clean sans-serif font. There's a great article about this topic by Lisa Charlotte Muth- [Which fonts to use for your charts and tables](https://blog.datawrapper.de/fonts-for-data-visualization/) .*
+
+![](https://raw.githubusercontent.com/tashapiro/horror-movies/main/images/font-preview.png)
+
+```{r fonts}
+#load fonts with sysfonts package
+sysfonts::font_add_google("Roboto","Roboto")
+sysfonts::font_add_google("Creepster","Creepster")
+#to automatically render fonts, use showtext_auto()
+showtext::showtext_auto()
+```
+
+------------------------------------------------------------------------
+
+## 2. Data Prep
+
+The data we're using today is from [**The Movie Database**](https://www.themoviedb.org/) and contains information on over 35K **Horror Movies** from the 1950s until today 😱
+
+Shout out to [**Georgios Karamanis**](https://twitter.com/geokaramanis) for inspiring our topic, I was inspired to wrangle this data after finding a similar one Georgios submitted for [**#TidyTuesday**](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-10-22)back in 2019.
+
+<center>![An alternative title to this workshop](https://raw.githubusercontent.com/tashapiro/horror-movies/main/images/little-workshop.jpeg){width="60%"}</center>
+
+### Data Dictionary
+
+| **Variable**          | **Type** | **Definition**             | **Example**                     |
+|:-----------------|:----------------:|:-----------------|:------------------|
+| **id**                |   int    | unique movie id            | 4488                            |
+| **original_title**    |   char   | original movie title       | Friday the 13th                 |
+| **title**             |   char   | movie title                | Friday the 13th                 |
+| **original_language** |   char   | movie language             | en                              |
+| **overview**          |   char   | movie overview/desc        | Camp counselors are stalked...  |
+| **tagline**           |   char   | tagline                    | They were warned...             |
+| **release_date**      |   date   | release date               | 1980-05-09                      |
+| **poster_path**       |   char   | image url                  | /HzrPn1gEHWixfMOvOehOTlHROo.jpg |
+| **popularity**        |   num    | popularity                 | 58.957                          |
+| **vote_count**        |   int    | total votes                | 2289                            |
+| **vote_average**      |   num    | average rating             | 6.4                             |
+| **budget**            |   int    | movie budget               | 550000                          |
+| **revenue**           |   int    | movie revenue              | 59754601                        |
+| **runtime**           |   int    | movie runtime (min)        | 95                              |
+| **status**            |   char   | movie status               | Released                        |
+| **genre_names**       |   char   | list of genre tags         | Horror, Thriller                |
+| **collection_id**     |   num    | collection id (nullable)   | 9735                            |
+| **collection_name**   |   char   | collection name (nullable) | Friday the 13th Collection      |
+
+### Preview Data
+
+Let's load in our data and take a look at what we're working with. Our data is stored on a **GitHub** repository, we can load in data with `readr::read_csv()` along with the url to the csv.
+
+```{r data-load, message=FALSE}
+#download data from GitHub repository
+raw <- readr::read_csv("https://raw.githubusercontent.com/tashapiro/horror-movies/main/data/horror_movies.csv")
+#preview data
+head(raw,5)
+```
+
+### Quick Clean-Up
+
+We'll use **dplyr** to make a few tweaks, namely to modify existing columns and add a couple of new ones with `mutate`. To learn more about dplyr, check out this slick [cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf) by RStuido.
+
+🧹 To-Dos:
+
+-   Express *budget* and *revenue* in millions
+-   Convert *release_date* from char to date
+-   Create *release_year* and *release_month*
+-   Append *poster_path* to themoviedb url to create a *poster_url*
+
+```{r data-cleanup, message=FALSE}
+#url for poster images, need this to concatenate with poster path
+base_url<-'https://www.themoviedb.org/t/p/w1280'
+
+
+```
+
+## Before We Plot...
+
+**Building Blocks**
+
+-   **ggplot** - how we initialize the ggplot object, optional to include data and mapping here (acts as the parent for future geoms).
+
+-   **Geom Layers** - the component to our plot. We can specify type with different [geom functions](https://ggplot2.tidyverse.org/reference/#layers), e.g. for a scatter plot we'll use `geom_point()`and for a bar chart we can use `geom_col()` or `geom_bar()`.
+
+-   **Aes** - aesthetic mapping of data variables to visual properties (e.g. x, y, color, size) in our plot. Set in `ggplot()` or individual geom layers.
+
+-   **Scales** - fine tuning the details of our plots, e.g. tweaking axis limits, axis labels, color values, etc. Scales are specific to data types (e.g. discrete, continuous).
+
+-   **Labs** - plot labeling, e.g. plot title and axis labels
+
+-   **Themes** - how we can adjust the look, feel, and overall style of our plot. There are [out of the box theme options](https://ggplot2.tidyverse.org/reference/ggtheme.html), e.g. `theme_bw()` or we can create our custom theme using `theme()` and modify components within the function.
+
+------------------------------------------------------------------------
+
+## 3. Plot 1: Scatter
+
+Slasher films are a popular sub-genre of Horror. For our scatter plot, let's visualize how some of the most popular slasher franchise films compare to one another.
+
+<center>![](https://64.media.tumblr.com/59e5ad388346b9ddb4a7e0ea1a6c3bf3/4b8b11efd529452b-d4/s540x810/8b8a0a3af75e2a9ef54c4653d88056dcefcb6535.jpg){width="375"}</center>
+
+### Pre-Plotting
+
+We'll need to slice and dice our data a bit. Using `dplyr::filter()`, pull in only records for films associated to **Halloween**, **Friday the 13th**, **Scream**, or **A Nightmare on Elm Street**.
+
+```{r scatter-data, fig.align="center", message=FALSE}
+#list of slasher collection titles
+slashers<- c("Halloween Collection",
+             "Friday the 13th Collection",
+             "Scream Collection",
+             "A Nightmare on Elm Street Collection")
+
+#create slashers dataframe object
+
+
+#preview data
+
+```
+
+### Basic Scatter Plot
+
+[**The Essentials**]{.underline}. We always start with `ggplot()`. There are two main arguments, **data** and **mapping.** Let's use our df_slashers data frame, for our mapping we need `aes()` and additional arguments to specify **x** (*budget*) and **y** (*revenue*).
+
+[**Plot Titles**]{.underline}. We can use `labs()` to adjust all types of plot labels. In this example, let's change our **title**, **subtitle**, **axis titles**, and **caption**.
+
+```{r basic-scatter, fig.align="center", message=FALSE}
+
+```
+
+### Level Up Scatter Plot
+
+[**More Aes Arguments**]{.underline}**.** Depending on the geom, `aes()` can contain more than just the x and y value pairs. In our scatter plot, we can also adjust details like **size** and **color**. Here, we'll map **size** to *popularity* and **color** to *collection_name.*
+
+[**Static Aesthetics**]{.underline}. Adjust the opacity of points with **alpha.**
+
+[**Intro to Scales**]{.underline}. To override our default color options from our color mapping, we can modify with a color scales. In this example, we'll use [`scale_color_manual`](https://ggplot2.tidyverse.org/reference/scale_manual.html) and pass in a list of hex color values**.** Here are some I've pre-selected: "#DB2B39","#29335C","#F3A712","#3ED58E"
+
+[**Intro to Themes**]{.underline}. Try out a new theme, here's a full list of [default themes](https://ggplot2.tidyverse.org/reference/ggtheme.html#arguments) (e.g. `theme_minimal`, `theme_light`, `theme_classic`)
+
+*💡 Tip: There are a bunch of [color palette libraries](https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-data-visualization/) you can explore. If you want something more custom, palette generator sites like [Coolors](https://coolors.co/) are also nice!*
+
+```{r interm-scatter, fig.align="center", message=FALSE, fig.width=3}
+#create ggplot and score in a variable name
+
+
+#uncomment to save plot
+#ggsave(filename="plot_scatter.png", width =7 , height=5, units="in", bg="white")
+```
+
+------------------------------------------------------------------------
+
+## 4. Plot 2 : Line
+
+Plot how many movies were released by month and year.
+
+### Pre-Plotting
+
+First, we'll need to aggregate our data with dplyr `group_by` on *release_month* and *release_year*. Since this data set spans back to the 50s, let's `filter` to only show *release_year* between 2016 and 2021.
+
+```{r data-preview}
+#aggregate data by month and year and filter year (2016-2021)
+
+```
+
+### Basic Line Chart
+
+How many movies were released month-over-month in 2021?
+
+```{r basic-line-plot, fig.align='center', fig.width=3}
+#subset rows to pull only months from release year 2021
+
+
+#create line plot with plot titles
+
+```
+
+### Level Up Line Chart
+
+[**More Scales**]{.underline}**.** Notice our first plot we have an issue with the x axis, it's plotting it on a continuous scale because *release_month* is numeric. Our y axis is also starting \~90 instead of 0. We can use scales to modify our x and y axis (e.g. limits, breaks, and labels). We'll need `scale_y_continuous` to change the y axis and `scale_x_continuous` to change our x axis.
+
+[**Annotations**]{.underline}. Sometimes its helpful to call out specific observations in our plots. We can add annotations with an `annotate` layer. For long annotations, use \n in your text to introduce a line break, e.g. "Wrap \nthis text."
+
+[**Custom Theme**]{.underline}. We tested out one of ggplot's default themes before, now let's try creating our own custom `theme` .
+
+💡 *Tip: The `annotate` layer is useful if you want to include text that isn't your data frame (e.g. single observation about a trend). If the label exists in the data, check out `geom_text` or `geom_label.`*
+
+<center>![Unlike Fred from Accounting, we never forget about themes](https://raw.githubusercontent.com/tashapiro/horror-movies/main/images/theme.png){width="60%"}</center>
+
+\
+[**Palette Variables**]{.underline}. Storing color palettes as variables can be useful when developing custom themes. Let's set up our palette variables first.
+
+```{r}
+#set up palette for future use
+pal_text <- "white"
+pal_subtext <- "#DFDFDF"
+pal_grid <- "grey30"
+pal_bg<-'#191919'
+```
+
+```{r interm-line-plot, fig.align='center', fig.width=3}
+#expand on line chart
+
+#uncomment to save plot
+#ggsave(filename="plot_line.png",  width=7, height=5, units="in")
+```
+
+### Line Charts + Facets
+
+What if we wanted to see seasonality and compare across different years?
+
+To create multiple plots, we can use ggplot [`facet_wrap`](https://ggplot2.tidyverse.org/reference/facet_wrap.html) to pivot a plot on a data variable. Using our **df_monthly** data, use `facet_wrap` with *release_year* to show month-over-month trends per year.
+
+💡 *Tip*: *Applying `annotate` on a facet plot will apply the annotation to all plots. To annotate a singular plot, recommend creating a new data frame with a facet variable and using `geom_text` or `geom_label`.*
+
+```{r 4c.facet-line-chart, fig.align='center', fig.width=3.5}
+#create facet line plot by release year
+
+#uncomment to save plot
+#ggsave(filename="plot_facet.png", plot=plot_facet, width =7 , height=5, units="in")
+```
+
+------------------------------------------------------------------------
+
+## Plot 3: Bar Plot
+
+Visualize the top 10 horror movies by revenue.
+
+### Pre-Plotting
+
+To rank our data set in descending order by revenue, we can use dplyr `arrange()`. We'll simplify and pick the columns we need for plotting with `select()`. Finally, use `head()` to grab the first 10 rows of data.
+
+```{r bar-plot-data}
+#get top movies based on revenue
+
+
+
+```
+
+### Basic Bar Plot
+
+Use [`geom_col`](https://ggplot2.tidyverse.org/reference/geom_bar.html) and map **y** to *title* and **x** to *revenue*.
+
+💡 *Tip: When you encounter discrete variables with long names like movie title, it might be easier to read as a horizontal bar chart instead of traditional bar chart.*
+
+```{r basic-bar-plot, fig.align='center', fig.width=3}
+#plot horizontal bar chart, add plot labels
+
+```
+
+### Level Up Bar Plot
+
+[**Reordering**]{.underline}**.** For discrete variables like movie *title,* ggplot will default to ordering in alphabetical order. We can use the base R function [`reorder()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/reorder.default) within our y mapping to change the order of our *title* by *revenue*.
+
+[**Layering Geoms**]{.underline}. The beauty of ggplot is all in the layering - you can keep building by adding more than one geom! To test this concept, we'll add the *revenue* numbers outside the bars with [`geom_text`](https://ggplot2.tidyverse.org/reference/geom_text.html).
+
+🗒️ *Note: Another trick for reordering discrete variables is to convert them to factors in before passing them into ggplot.*
+
+```{r interm-bar-plot, fig.align="center", fig.width=4}
+pal_bar<-'#A70000'
+
+```
+
+### Advanced Bar Plot
+
+[**Keep Layering**]{.underline}. Add in budget revenue for comparison. We can create a bullet bar graph by overlaying a thinner `geom_col` over our existing set up. Use the **width** argument to adjust its thickness.
+
+[**Intro to More Geoms**]{.underline}. The world of geoms goes beyond the geoms listed in ggplot2. There are tons of ggplot extension's to explore that work with ggplot2. In this example, we will plot the movie poster images with **ggimage** [`geom_image`](https://www.rdocumentation.org/packages/ggimage/versions/0.3.1/topics/geom_image).
+
+[**Annotations + Arrows**]{.underline}. Sometimes the placements of annotations is a little tricky, we might want to [draw a line](https://ggplot2.tidyverse.org/reference/geom_segment.html) and arrow connecting our text to the observation. To draw straight lines, we can use `geom_segment`, to draw a curved line we can use `geom_curve`. Use the **arrow** argument and `arrow()` to add an arrow head.
+
+🗒️ *Note: For curved lines, a negative curvature values create left-hand curves and positive values create right-hand curves.*
+
+```{r adv-bar-plot, fig.height=3.7, fig.width=3.7}
+pal_bar2<-"#600000"
+
+#uncomment to save file
+#ggsave(filename="plot_bar.png", height=8, width=8, units="in")
+```
+
+## The Workshop Sequel
+
+This concludes our workshop session today, but it's just the beginning of your ggplotting adventure.
+
+Next step is just for you. Create your own ggplot using the Horror Movies data set and share your work with us on Twitter.
+
+If you have any questions regarding our ggplot workshop, please feel free to reach out to me [\@tanya_shapiro](https://twitter.com/tanya_shapiro). Thank you!
+
+```{r end-plot}
+#create your own ggplot
+```
