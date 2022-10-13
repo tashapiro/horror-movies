@@ -97,7 +97,7 @@ Shout out to [**Georgios Karamanis**](https://twitter.com/geokaramanis) for insp
 ### Data Dictionary
 
 | **Variable**          | **Type** | **Definition**             | **Example**                     |
-|:----------------------|:--------:|:---------------------------|:--------------------------------|
+|:---------------|:--------------:|:------------------|:---------------------|
 | **id**                |   int    | unique movie id            | 4488                            |
 | **original_title**    |   char   | original movie title       | Friday the 13th                 |
 | **title**             |   char   | movie title                | Friday the 13th                 |
@@ -236,7 +236,7 @@ ggplot(data=df_slashers, mapping=aes(y=revenue, x=budget))+
 
 *💡 Tip: There are a bunch of [color palette libraries](https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-data-visualization/) you can explore. If you want something more custom, palette generator sites like [Coolors](https://coolors.co/) are also nice!*
 
-```{r interm-scatter, fig.align="center", message=FALSE, fig.width=3}
+```{r interm-scatter, fig.align="center", message=FALSE, fig.width=3 }
 #create ggplot and score in a variable name
 plot_scatter<-ggplot(df_slashers, mapping=aes(y=revenue, x=budget))+
   geom_point(mapping=aes(size=popularity, color=collection_name), alpha=0.6)+
@@ -347,7 +347,7 @@ plot_line<-ggplot(data = df_monthly_2021,
         text = element_text(color=pal_text),
         axis.text = element_text(color=pal_text),
         axis.title.y = element_text(size=10, margin=margin(r=10)),
-        plot.title = element_text(family="Creepster", size=20, hjust=0.5),
+        plot.title = element_text(family="Creepster", size=25, hjust=0.5),
         plot.subtitle = element_text(hjust=0.5),
         #add padding around the plot
         plot.margin = margin(l=20, r=20, b=10, t=20))
