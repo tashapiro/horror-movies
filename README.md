@@ -47,10 +47,5 @@ The workshop is scheduled for 1pm ET October 13th, 2022. A recording of the sess
 | **collection_id**     |   num    | collection id (nullable)   | 9735                            |
 | **collection_name**   |   char   | collection name (nullable) | Friday the 13th Collection      |
 
-## Plots
 
-Each plot has two or three steps: basic, intermediate, and advance. Below are the results after applying advanced ggplotting techniques.
-
-### Bar Plot
-![](https://raw.githubusercontent.com/tashapiro/horror-movies/main/plots/bar-plot.png)
 
