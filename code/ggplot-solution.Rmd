@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align="center")
+#set to appropriate directory path, default to Desktop
 knitr::opts_knit$set(root.dir="~/Desktop")
 options(dplyr.summarise.inform = FALSE)
 #options(repos = list(CRAN="http://cran.rstudio.com/"))
@@ -96,7 +97,7 @@ Shout out to [**Georgios Karamanis**](https://twitter.com/geokaramanis) for insp
 ### Data Dictionary
 
 | **Variable**          | **Type** | **Definition**             | **Example**                     |
-|:-----------------|:----------------:|:-----------------|:------------------|
+|:----------------------|:--------:|:---------------------------|:--------------------------------|
 | **id**                |   int    | unique movie id            | 4488                            |
 | **original_title**    |   char   | original movie title       | Friday the 13th                 |
 | **title**             |   char   | movie title                | Friday the 13th                 |
@@ -158,6 +159,8 @@ head(df,5)
 ```
 
 ## Before We Plot...
+
+![](https://raw.githubusercontent.com/tashapiro/horror-movies/main/images/ggplot-cake.png)
 
 **Building Blocks**
 
@@ -520,7 +523,7 @@ plot_bar<-ggplot(data=df_top_movies, mapping=aes(y=reorder(title,revenue), x=rev
     axis.text.y = element_blank(),
     plot.subtitle = element_text(color=pal_subtext, size=12),
     plot.caption = element_text(color=pal_subtext, size=10),
-    plot.title=element_text(family="Creepster", size=30, color=pal_title),
+    plot.title=element_text(family="Creepster", size=30, color=pal_text),
     #adjust lines for ticks and grid
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
