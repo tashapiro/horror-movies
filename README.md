@@ -14,7 +14,7 @@ The workshop is scheduled for 1pm ET October 13th, 2022. A recording of the sess
 
 **Workshop Materials**
 
-- Start Notebook
+- [Start Notebook](https://github.com/tashapiro/horror-movies/blob/main/code/ggplot-starter.Rmd)
 - [Solutions Notebook](https://github.com/tashapiro/horror-movies/blob/main/code/ggplot-solution.Rmd)
 
 ## Libraries Used
