@@ -26,7 +26,7 @@ The workshop is scheduled for 1pm ET October 13th, 2022. A recording of the sess
 
 ## Data Dictionary
 
-Note - to use the images, append the poster path to the following url: https://www.themoviedb.org/t/p/w1280
+Note: for poster_path must be appended to this url https://www.themoviedb.org/t/p/w1280/ to generate full image!
 
 | **Variable**          | **Type** | **Definition**             | **Example**                     |
 |:---------------|:--------------:|:------------------|:---------------------|
